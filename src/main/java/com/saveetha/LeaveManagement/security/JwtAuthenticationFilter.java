@@ -31,29 +31,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        // Check if the header contains "Bearer " and process it
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7); // Remove "Bearer " prefix
 
-        String token = authHeader.substring(7); // Remove "Bearer " prefix
+            try {
+                // Extract the empId from the JWT token
+                String empId = jwtUtil.extractEmpId(token);
+                if (empId != null) {
+                    System.out.println(empId); // For debugging (can be removed later)
 
-        try {
-            String empId = jwtUtil.extractEmpId(token);
-            if (empId != null) {
-                System.out.println(empId);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(empId);
+                    // Fetch the user details based on the empId (i.e., username)
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(empId);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // Create authentication token with user details
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // Set additional details, including the request
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    // Set the authentication object in the security context
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                // Handle exceptions (e.g., token invalid, expired, etc.)
+                System.out.println("JWT Authentication failed: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.out.println("JWT Authentication failed: " + e.getMessage());
         }
 
+        // Continue with the filter chain
         filterChain.doFilter(request, response);
     }
 }
