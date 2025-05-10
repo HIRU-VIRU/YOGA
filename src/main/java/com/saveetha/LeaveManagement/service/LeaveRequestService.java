@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.LeaveHistoryDTO;
 import com.saveetha.LeaveManagement.dto.LeaveRequestDTO;
 import com.saveetha.LeaveManagement.entity.Employee;
 import com.saveetha.LeaveManagement.entity.LeaveAlteration;
@@ -10,6 +11,9 @@ import com.saveetha.LeaveManagement.enums.LeaveStatus;
 import com.saveetha.LeaveManagement.enums.NotificationStatus;
 import com.saveetha.LeaveManagement.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -141,4 +145,29 @@ public class LeaveRequestService {
                 .orElseThrow(() -> new RuntimeException("Leave Request not found with ID: " + id));
         leaveRequestRepository.delete(leaveRequest);
     }
+    private String getCurrentUserEmpId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername(); // assuming empId is used as username
+        } else {
+            throw new RuntimeException("Unable to extract user details from security context");
+        }
+    }
+    public List<LeaveHistoryDTO> getLeaveHistoryForCurrentUser() {
+        String empId = getCurrentUserEmpId();
+        List<Object[]> rawData = leaveRequestRepository.getLeaveHistoryForEmployee(empId);
+
+        return rawData.stream().map(row -> new LeaveHistoryDTO(
+                (Integer) row[0],
+                (String) row[1],
+                ((java.sql.Date) row[2]).toLocalDate(),
+                ((java.sql.Date) row[3]).toLocalDate(),
+                (String) row[4],
+                (String) row[5],
+                ((java.sql.Timestamp) row[6]).toLocalDateTime()
+        )).toList();
+    }
+
+
+
 }

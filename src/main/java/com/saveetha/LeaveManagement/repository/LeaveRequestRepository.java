@@ -73,6 +73,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
                                 @Param("statuses") List<LeaveStatus> statuses,
                                 @Param("startDate") LocalDate startDate,
                                 @Param("endDate") LocalDate endDate);
+
+
     @Query("SELECT COUNT(l) FROM LeaveRequest l WHERE l.employee.empId = :empId AND l.leaveType.leaveTypeId = :leaveTypeId AND l.status IN :statuses AND l.startDate BETWEEN :startDate AND :endDate")
     int countCLsUsed(@Param("empId") String empId,
                      @Param("leaveTypeId") Integer leaveTypeId,
@@ -80,5 +82,23 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
                      @Param("startDate") LocalDate startDate,
                      @Param("endDate") LocalDate endDate);
 
-
+    @Query(value = """
+        SELECT 
+            lr.request_id,
+            lt.type_name AS leave_type,
+            lr.start_date,
+            lr.end_date,
+            lr.status,
+            lr.reason,
+            lr.created_at
+        FROM 
+            leave_request lr
+        JOIN 
+            leave_type lt ON lr.leave_type_id = lt.leave_type_id
+        WHERE 
+            lr.emp_id = :empId AND lr.active = true
+        ORDER BY 
+            lr.created_at DESC
+        """, nativeQuery = true)
+    List<Object[]> getLeaveHistoryForEmployee(@Param("empId") String empId);
 }

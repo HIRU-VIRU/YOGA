@@ -88,6 +88,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.POST, "/api/leave-request/**").authenticated()
 						.requestMatchers(HttpMethod.PATCH, "/api/leave-request/**").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/leave-request/all").hasAuthority("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/api/leave-request/leave-history").authenticated()
 						.requestMatchers(HttpMethod.GET, "/api/leave-request/{id}").permitAll()
 						.requestMatchers(HttpMethod.DELETE, "/api/leave-request/{id}").hasAuthority("ADMIN")
 
@@ -106,7 +107,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.PUT, "/api/leave-approval/update/{approvalId}").hasAuthority("ADMIN")
 						.requestMatchers(HttpMethod.PATCH, "/api/leave-approval/process/{approvalId}").authenticated()
 						.requestMatchers(HttpMethod.POST, "/api/leave-approval/initiate/{leaveRequestId}").permitAll()
-						.requestMatchers(HttpMethod.PUT, "/api/leave-approval/approver/pending-requests").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/leave-approval/approver/pending-requests").permitAll()
 
 						.anyRequest().authenticated()
 				)
