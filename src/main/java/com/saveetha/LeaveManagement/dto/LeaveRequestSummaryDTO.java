@@ -1,5 +1,7 @@
 package com.saveetha.LeaveManagement.dto;
 
+import java.util.List;
+
 public class LeaveRequestSummaryDTO {
     private Integer requestId;
     private String empId;
@@ -9,6 +11,16 @@ public class LeaveRequestSummaryDTO {
     private String endDate;
     private String reason;
     private String status;
+
+    private List<LeaveAlterationDto> alterations;
+
+    public List<LeaveAlterationDto> getAlterations() {
+        return alterations;
+    }
+
+    public void setAlterations(List<LeaveAlterationDto> alterations) {
+        this.alterations = alterations;
+    }
 
     public Integer getRequestId() {
         return requestId;
@@ -73,6 +85,5 @@ public class LeaveRequestSummaryDTO {
     public void setStatus(String status) {
         this.status = status;
     }
-// getters and setters
+    // getters and setters
 }
-

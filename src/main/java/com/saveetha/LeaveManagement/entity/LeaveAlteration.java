@@ -56,6 +56,7 @@ public class LeaveAlteration {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -3,9 +3,13 @@ package com.saveetha.LeaveManagement.dto;
 import com.saveetha.LeaveManagement.enums.AlterationType;
 import com.saveetha.LeaveManagement.enums.NotificationStatus;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
+@Getter
+@Setter
 @Data
 public class LeaveAlterationDto {
 
@@ -21,4 +25,6 @@ public class LeaveAlterationDto {
     private LocalDate classDate;
     private String subjectName;
     private String subjectCode;
+
+
 }
