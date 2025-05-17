@@ -3,6 +3,7 @@ package com.saveetha.LeaveManagement.controller;
 import com.saveetha.LeaveManagement.dto.LeaveHistoryDto;
 import com.saveetha.LeaveManagement.dto.LeaveRequestDTO;
 import com.saveetha.LeaveManagement.entity.LeaveRequest;
+import com.saveetha.LeaveManagement.security.JwtUtil;
 import com.saveetha.LeaveManagement.service.CloudinaryService;
 import com.saveetha.LeaveManagement.service.LeaveRequestService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/leave-request")
 @RequiredArgsConstructor
 public class LeaveRequestController {
+    @Autowired
+    private JwtUtil jwtUtil;
 
     private final LeaveRequestService leaveRequestService;
     @Autowired
@@ -41,11 +44,22 @@ public class LeaveRequestController {
         return ResponseEntity.ok(response);
     }
     // PATCH endpoint to withdraw a leave request
-    @PatchMapping("/withdraw/{requestId}")
-    public ResponseEntity<String> withdrawLeaveRequest(@PathVariable Integer requestId) {
-        String response = leaveRequestService.withdrawLeaveRequest(requestId);
-        return ResponseEntity.ok(response);
+
+    @PutMapping("/withdraw/{leaveRequestId}")
+    public ResponseEntity<String> withdrawLeaveRequest(
+            @PathVariable Integer leaveRequestId,
+            @RequestHeader("Authorization") String token) {
+        try {
+            String empId = jwtUtil.extractEmpId(token.substring(7)); // Remove "Bearer "
+            leaveRequestService.withdrawLeaveRequestByEmployee(leaveRequestId, empId);
+            return ResponseEntity.ok("Leave request withdrawn successfully");
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
+
     @PostMapping("/upload-medical-certificate")
     public ResponseEntity<String> uploadMedicalCertificate(@RequestParam("file") MultipartFile file) {
         try {

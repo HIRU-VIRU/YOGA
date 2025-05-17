@@ -1,4 +1,5 @@
 package com.saveetha.LeaveManagement.controller;
+
 import com.saveetha.LeaveManagement.service.PasswordResetService;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +17,13 @@ public class PasswordResetController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody EmailRequest request) {
-        var tokenOpt = passwordResetService.createPasswordResetToken(request.getEmail());
-        if (tokenOpt.isEmpty()) {
+        String token = String.valueOf(passwordResetService.createPasswordResetToken(request.getEmail()));
+        if (token == null) {
             return ResponseEntity.badRequest().body("Email not found");
         }
 
         // Return token in JSON instead of sending email
-        return ResponseEntity.ok(new TokenResponse(tokenOpt.get(), "Use this token to reset your password."));
+        return ResponseEntity.ok(new TokenResponse(token, "Use this token to reset your password."));
     }
 
     @PostMapping("/reset-password")

@@ -8,9 +8,11 @@ import com.saveetha.LeaveManagement.enums.LeaveStatus;
 import com.saveetha.LeaveManagement.enums.NotificationStatus;
 import com.saveetha.LeaveManagement.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -133,19 +135,18 @@ public class LeaveRequestService {
                 .map(LeaveApproval::getApprovalId)
                 .collect(Collectors.toList());
     }
+    @Transactional
+    public void withdrawLeaveRequestByEmployee(Integer leaveRequestId, String empId) throws IllegalAccessException {
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(leaveRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
 
-
-    public String withdrawLeaveRequest(Integer requestId) {
-        LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Leave request not found"));
-
-        if (leaveRequest.getStatus() == LeaveStatus.PENDING || leaveRequest.getStatus() == LeaveStatus.APPROVED) {
-            leaveRequest.setStatus(LeaveStatus.WITHDRAWN);
-            leaveRequestRepository.save(leaveRequest);
-            return "Leave request withdrawn successfully.";
-        } else {
-            throw new RuntimeException("Only PENDING or APPROVED leave requests can be withdrawn.");
+        if (!leaveRequest.getEmployee().getEmpId().equals(empId)) {
+            throw new IllegalAccessException("You are not authorized to withdraw this leave request");
         }
+
+        leaveRequest.setStatus(LeaveStatus.WITHDRAWN);
+        leaveApprovalRepository.deleteByLeaveRequest(leaveRequest);
+        leaveRequestRepository.save(leaveRequest);
     }
     private String getCurrentUserEmpId(){
         Object principal= SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -183,4 +184,8 @@ public class LeaveRequestService {
                 .orElseThrow(() -> new RuntimeException("Leave Request not found with ID: " + id));
         leaveRequestRepository.delete(leaveRequest);
     }
+
+    @Autowired
+    private LeaveApprovalRepository leaveApprovalRepository;
+
 }

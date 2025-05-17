@@ -39,5 +39,7 @@ public interface LeaveApprovalRepository extends JpaRepository<LeaveApproval, In
     @Query("DELETE FROM LeaveApproval la WHERE la.leaveRequest.id = :leaveRequestId")
     void deleteByLeaveRequestId(@Param("leaveRequestId") Long leaveRequestId);
 
+    void deleteByLeaveRequest(LeaveRequest leaveRequest);
+
 
 }

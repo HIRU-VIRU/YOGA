@@ -1,18 +1,10 @@
 package com.saveetha.LeaveManagement.service;
 
 import com.saveetha.LeaveManagement.entity.Employee;
-import com.saveetha.LeaveManagement.repository.EmployeeRepository;
-import com.saveetha.LeaveManagement.repository.PasswordResetTokenRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-
-
-
-import com.saveetha.LeaveManagement.entity.Employee;
 import com.saveetha.LeaveManagement.entity.PasswordResetToken;
 import com.saveetha.LeaveManagement.repository.EmployeeRepository;
 import com.saveetha.LeaveManagement.repository.PasswordResetTokenRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,6 +16,8 @@ public class PasswordResetService {
 
     private final EmployeeRepository employeeRepository;
     private final PasswordResetTokenRepository tokenRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // ✅ Add encoder
 
     public PasswordResetService(EmployeeRepository employeeRepository, PasswordResetTokenRepository tokenRepository) {
         this.employeeRepository = employeeRepository;
@@ -78,8 +72,8 @@ public class PasswordResetService {
         }
 
         Employee employee = resetToken.getEmployee();
-        // Here, encode password before saving
-        employee.setPassword(newPassword); // ideally encode with BCryptPasswordEncoder
+        // ✅ Encode password before saving
+        employee.setPassword(passwordEncoder.encode(newPassword));
 
         employeeRepository.save(employee);
 
