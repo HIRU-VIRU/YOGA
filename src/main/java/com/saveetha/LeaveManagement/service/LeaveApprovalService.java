@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.LeaveApprovalStatusDTO;
 import com.saveetha.LeaveManagement.entity.*;
 import com.saveetha.LeaveManagement.enums.ApprovalStatus;
 import com.saveetha.LeaveManagement.enums.LeaveStatus;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,7 +26,7 @@ public class LeaveApprovalService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeLeaveBalanceService LeaveBalanceService;
 
-    public void initiateApprovalFlow(Integer leaveRequestId) {
+    public List<LeaveApproval> initiateApprovalFlow(Integer leaveRequestId) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(leaveRequestId)
                 .orElseThrow(() -> new RuntimeException("LeaveRequest not found"));
 
@@ -37,6 +39,7 @@ public class LeaveApprovalService {
         System.out.println("Initiating approval flow for Leave Request ID: " + leaveRequestId);
         System.out.println("Approval Flow ID: " + approvalFlowId);
         System.out.println("Approvers in flow:");
+        List<LeaveApproval> savedApprovals = new ArrayList<>();
 
         for (ApprovalFlowLevel level : flowLevels) {
             System.out.println(" - Approver: " + level.getApprover().getEmpId() +
@@ -46,9 +49,10 @@ public class LeaveApprovalService {
             approval.setApprovalFlowLevel(level);   // Which level of approval
             approval.setApprover(level.getApprover());  // Who is the approver
             approval.setStatus(ApprovalStatus.PENDING); // Initially pending
-            leaveApprovalRepository.save(approval); //  This creates one row per level
+            LeaveApproval saved= leaveApprovalRepository.save(approval); //  This creates one row per level
+            savedApprovals.add(saved);
         }
-        System.out.println("Approval flow entries created for leave request.");
+        return savedApprovals;
     }
 
 
@@ -133,6 +137,35 @@ public class LeaveApprovalService {
         return "Leave approved at current level and pending further approval";
     }
 
+    public List<LeaveApprovalStatusDTO> getApprovalStatusByLeaveRequestId(Integer leaveRequestId) {
+        List<LeaveApproval> approvals = leaveApprovalRepository.findByLeaveRequest_RequestIdOrderByApprovalFlowLevel_SequenceAsc(leaveRequestId);
+
+        // Find the next approver (first one with status PENDING)
+        boolean nextApproverFound = false;
+
+        List<LeaveApprovalStatusDTO> result = new ArrayList<>();
+        for (LeaveApproval approval : approvals) {
+            String status = approval.getStatus().toString();
+            if (!nextApproverFound && approval.getStatus() == ApprovalStatus.PENDING) {
+                // Mark this one as PENDING (next approver)
+                nextApproverFound = true;
+            } else if (approval.getStatus() == ApprovalStatus.PENDING) {
+                // Others after next approver remain as WAITING
+                status = "WAITING";
+            }
+
+            result.add(new LeaveApprovalStatusDTO(
+                    approval.getApprover().getEmpId(),
+                    approval.getApprover().getEmpName(),
+                    status,
+                    approval.getReason(),
+                    approval.getUpdatedAt(),
+                    approval.getApprovalFlowLevel().getSequence()
+            ));
+        }
+
+        return result;
+    }
 
 
     // New method: Update approval

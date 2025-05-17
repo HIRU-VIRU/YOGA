@@ -8,29 +8,51 @@ register------->POST--->http://localhost:8080/auth/register
            "password":"Yazhu@07",
            "role":"ADMIN"
         }
+response:
 login-------->POST---->http://localhost:8080/auth/login
     {
        "email":"yoga@gmail.com",
        "password":"Yazhu@07"
     }
+response :
+
+
+forgot password:
+
+
+POST /auth/forgot-password
+
+{
+  "email": "user@example.com"
+}
+respone:
+{
+  "empId": "EMP001",
+  "resetToken": "abc123token"
+}
+
+ POST request to /auth/reset-password
+
+ {
+   "empId": "EMP001",
+   "token": "abc123token",
+   "newPassword": "newSecret123"
+ }
+
+
 
 
 =--------------------------------------------------Update-Profile:---------------------------------
 
 update user profile -->PUT------>http://localhost:8080/api/employees/update/{empId} // actual employee id
 {
-  "empName": "yogasundari",
-  "designation": "Professor",
-  "departmentId": 2,
-  "staffType": "TEACHING"
-}
-{
   "empName": "IT-HOD",
   "designation": "HOD",
   "departmentId": 2,
   "staffType": "TEACHING",
   "profilePicture":"image.png",
-  "approvalFlow":1
+  "approvalFlowId":1,
+  "joiningDate":"2025-04-15"
 }
 get All employees with active and inactive --->GET---->http://localhost:8080/api/employees
 get particular employee by id--->GET------>http://localhost:8080/api/employees/{empId}
@@ -86,6 +108,15 @@ Leave Request --->http://localhost:8080/api/leave-request/create
   "reason": "Personal work",
   "earnedDate": null,
   "fileUpload": null
+} ---------> contains major fields , but we use based on leave type like permission (start time ,end time).
+{
+  "empId": "21222204",
+  "leaveTypeId": 1,
+  "halfDay":false,
+  "startDate": "2025-05-11",
+  "endDate": "2025-05-11",
+  "reason": "sick leave",
+  "hasClass": true
 }
 ------------------------------LEAVE ALTERATION------------------------------------------------------------
 leave Alteration-Moodel link --> http://localhost:8080/api/leave-alteration/assign

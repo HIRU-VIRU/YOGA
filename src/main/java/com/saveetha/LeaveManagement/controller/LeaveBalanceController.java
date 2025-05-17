@@ -39,4 +39,18 @@ public class LeaveBalanceController {
             return leaveBalanceService.getEmployeeLeaveBalance(employee);
         }
     }
+    @GetMapping("/leave-balance/me")
+    public Object getMyLeaveBalance(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7);
+        String empId = jwtUtil.extractEmpId(token);
+
+        Employee employee = leaveBalanceService.getEmployeeById(empId);
+        return leaveBalanceService.getEmployeeLeaveBalance(employee);
+    }
+
 }

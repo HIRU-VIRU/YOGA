@@ -29,16 +29,16 @@ public class LeaveRequest {
     @JoinColumn(name = "leave_type_id", nullable = false)
     private LeaveType leaveType; // Foreign Key reference to LeaveType
 
-
-    @OneToMany(mappedBy = "leaveRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<LeaveAlteration> alterations;
-
-
     @Column(nullable = false)
     private LocalDate startDate;
 
     @Column(nullable = false)
     private LocalDate endDate;
+
+
+
+    @OneToMany(mappedBy = "leaveRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<LeaveAlteration> alterations;
 
     @Column(name = "number_of_days")
     private Double numberOfDays;
@@ -78,11 +78,6 @@ public class LeaveRequest {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    public List<LeaveAlteration> getAlterations() {
-        return alterations;
-    }
-
 
     public Integer getRequestId() {
         return requestId;
@@ -205,6 +200,26 @@ public class LeaveRequest {
         this.updatedAt = updatedAt;
     }
 
+    public List<LeaveAlteration> getAlterations() {
+        return alterations;
+    }
 
+    public void setNumberOfDays(Double numberOfDays) {
+        this.numberOfDays = numberOfDays;
+    }
 
+    public void setAlterations(List<LeaveAlteration> alterations) {
+        this.alterations = alterations;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }
+
+
+

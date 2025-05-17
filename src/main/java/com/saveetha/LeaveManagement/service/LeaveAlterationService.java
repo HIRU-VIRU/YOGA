@@ -122,7 +122,9 @@ public class LeaveAlterationService {
         return leaveAlterationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Alteration not found"));
     }
-
+    public List<String> getNotificationStatuses(Integer requestId) {
+        return leaveAlterationRepository.findNotificationStatusesByRequestId(requestId);
+    }
 }
 
 

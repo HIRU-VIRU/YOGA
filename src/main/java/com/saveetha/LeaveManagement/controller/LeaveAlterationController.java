@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/leave-alteration")
 public class LeaveAlterationController {
@@ -30,6 +32,10 @@ public class LeaveAlterationController {
        leaveAlterationService.approveAlteration(id);
         return ResponseEntity.ok("Alteration approved successfully!");
     }
-
+    @GetMapping("/notification-status/{requestId}")
+    public ResponseEntity<List<String>> getNotificationStatus(@PathVariable Integer requestId) {
+        List<String> statuses = leaveAlterationService.getNotificationStatuses(requestId);
+        return ResponseEntity.ok(statuses);
+    }
 
 }

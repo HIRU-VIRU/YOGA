@@ -1,20 +1,21 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.LeaveHistoryDto;
 import com.saveetha.LeaveManagement.dto.LeaveRequestDTO;
-import com.saveetha.LeaveManagement.entity.Employee;
-import com.saveetha.LeaveManagement.entity.LeaveAlteration;
-import com.saveetha.LeaveManagement.entity.LeaveRequest;
-import com.saveetha.LeaveManagement.entity.LeaveType;
+import com.saveetha.LeaveManagement.entity.*;
 import com.saveetha.LeaveManagement.enums.AlterationType;
 import com.saveetha.LeaveManagement.enums.LeaveStatus;
 import com.saveetha.LeaveManagement.enums.NotificationStatus;
 import com.saveetha.LeaveManagement.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -101,7 +102,7 @@ public class LeaveRequestService {
         return isHalfDay ? totalDays * 0.5 : totalDays;  // For half-day, return 0.5 of the total days.
     }
 
-    public String submitLeaveRequest(Integer requestId) {
+    public List<Integer> submitLeaveRequest(Integer requestId) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Leave Request not found"));
 
@@ -127,8 +128,10 @@ public class LeaveRequestService {
         // If no alteration or all alterations are valid, proceed
         leaveRequest.setStatus(LeaveStatus.PENDING);
         leaveRequestRepository.save(leaveRequest);
-        leaveApprovalService.initiateApprovalFlow(requestId);
-        return "Leave request submitted successfully!";
+        List<LeaveApproval> savedApprovals= leaveApprovalService.initiateApprovalFlow(requestId);
+        return  savedApprovals.stream()
+                .map(LeaveApproval::getApprovalId)
+                .collect(Collectors.toList());
     }
 
 
@@ -144,6 +147,28 @@ public class LeaveRequestService {
             throw new RuntimeException("Only PENDING or APPROVED leave requests can be withdrawn.");
         }
     }
+    private String getCurrentUserEmpId(){
+        Object principal= SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }else{
+            throw new RuntimeException("unable to extract user details from security context");
+        }
+    }
+    public List<LeaveHistoryDto> getLeaveHistoryForCurrentUser(){
+        String empId =getCurrentUserEmpId();
+        List<Object[]> rawData =leaveRequestRepository.getLeaveHistoryForEmployee(empId);
+
+        return rawData.stream().map(row-> new LeaveHistoryDto(
+                (Integer) row[0],
+                (String) row[1],
+                ((java.sql.Date) row[2]).toLocalDate(),
+                ((java.sql.Date) row[3]).toLocalDate(),
+                (String) row[4],
+                (String) row[5],
+                ((java.sql.Timestamp) row [6]).toLocalDateTime()
+        )).toList();
+    }
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRequestRepository.findAll();
     }
@@ -158,14 +183,4 @@ public class LeaveRequestService {
                 .orElseThrow(() -> new RuntimeException("Leave Request not found with ID: " + id));
         leaveRequestRepository.delete(leaveRequest);
     }
-    public void attachMedicalCertificate(String empId, String fileUrl) {
-        LeaveRequest latestRequest = leaveRequestRepository
-                .findTopByEmployeeEmpIdOrderByStartDateDesc(empId)
-                .orElseThrow(() -> new RuntimeException("Leave request not found"));
-
-        latestRequest.setFileUpload(fileUrl);
-        leaveRequestRepository.save(latestRequest);
-    }
-
-
 }

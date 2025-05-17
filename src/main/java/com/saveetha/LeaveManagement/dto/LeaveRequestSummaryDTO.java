@@ -4,6 +4,7 @@ import java.util.List;
 
 public class LeaveRequestSummaryDTO {
     private Integer requestId;
+    private Integer approvalId;
     private String empId;
     private String empName;
     private String leaveType;
@@ -11,7 +12,6 @@ public class LeaveRequestSummaryDTO {
     private String endDate;
     private String reason;
     private String status;
-
     private List<LeaveAlterationDto> alterations;
 
     public List<LeaveAlterationDto> getAlterations() {
@@ -21,7 +21,6 @@ public class LeaveRequestSummaryDTO {
     public void setAlterations(List<LeaveAlterationDto> alterations) {
         this.alterations = alterations;
     }
-
     public Integer getRequestId() {
         return requestId;
     }
@@ -85,5 +84,14 @@ public class LeaveRequestSummaryDTO {
     public void setStatus(String status) {
         this.status = status;
     }
-    // getters and setters
+
+    public Integer getApprovalId() {
+        return approvalId;
+    }
+
+    public void setApprovalId(Integer approvalId) {
+        this.approvalId = approvalId;
+    }
+// getters and setters
 }
+
