@@ -35,7 +35,7 @@ public class LeaveApprovalController {
     }
 
     // Call this when an approver approves or rejects
-    @GetMapping("/process/{approvalId}")
+    @PatchMapping("/process/{approvalId}")
     public ResponseEntity<String> processApproval(
             @PathVariable Integer approvalId,
             @RequestBody ApprovalRequestDTO approvalRequestDTOdto

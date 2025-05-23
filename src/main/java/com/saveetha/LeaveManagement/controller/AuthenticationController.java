@@ -52,4 +52,9 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // Optionally log the logout event
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }

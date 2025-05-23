@@ -32,10 +32,14 @@ public class PasswordResetService {
 
         Employee employee = employeeOpt.get();
 
-        // Generate token
+        // Check if token already exists for this employee
+        Optional<PasswordResetToken> existingTokenOpt = tokenRepository.findByEmployee(employee);
+        existingTokenOpt.ifPresent(tokenRepository::delete); // ✅ Delete existing token
+
+        // Generate new token
         String token = UUID.randomUUID().toString();
 
-        // Save token with expiry (e.g., 1 hour later)
+        // Save new token
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(token);
         resetToken.setEmployee(employee);
@@ -45,6 +49,7 @@ public class PasswordResetService {
 
         return Optional.of(token);
     }
+
 
     public boolean validatePasswordResetToken(String token) {
         Optional<PasswordResetToken> resetTokenOpt = tokenRepository.findByToken(token);

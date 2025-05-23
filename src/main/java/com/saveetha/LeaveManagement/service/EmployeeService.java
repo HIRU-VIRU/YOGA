@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.CreateEmployeeRequestDto;
 import com.saveetha.LeaveManagement.dto.EmployeeUpdateDTO;
 import com.saveetha.LeaveManagement.entity.ApprovalFlow;
 import com.saveetha.LeaveManagement.entity.Department;
@@ -11,6 +12,7 @@ import com.saveetha.LeaveManagement.repository.DepartmentRepository;
 import com.saveetha.LeaveManagement.repository.EmployeeRepository;
 import com.saveetha.LeaveManagement.repository.LeaveTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -169,4 +171,41 @@ public class EmployeeService {
     public List<Employee> getActiveEmployees() {
         return employeeRepository.findByactiveTrue();
     }
+
+
+
+    public Employee createEmployee(CreateEmployeeRequestDto dto) {
+        if (employeeRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Employee with this email already exists");
+        }
+
+        Department department = departmentRepository.findById(dto.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        Employee employee = new Employee();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        employee.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        employee.setEmpName(dto.getEmpName());
+        employee.setEmpId(dto.getEmpId());
+        employee.setEmail(dto.getEmail());
+        employee.setJoiningDate(dto.getJoiningDate());
+        employee.setDesignation(dto.getDesignation());
+        employee.setRole(dto.getRole());
+        employee.setDepartment(department);
+        employee.setActive(true);
+
+        employeeRepository.save(employee);
+
+        // ✅ Fetch leave types and determine academic year
+        List<LeaveType> leaveTypes = leaveTypeRepository.findAll();
+        String academicYear = determineAcademicYear(dto.getJoiningDate());
+
+        // ✅ Initialize leave balance
+        initializeLeaveBalanceService.initializeLeaveBalance(employee, leaveTypes, academicYear);
+
+        return employee;
+    }
+
+
 }

@@ -177,5 +177,6 @@ ORDER BY
 
           """,nativeQuery=true)
     List<Object[]>getLeaveHistoryForEmployee(@Param("empId") String empId);
+
 }
 

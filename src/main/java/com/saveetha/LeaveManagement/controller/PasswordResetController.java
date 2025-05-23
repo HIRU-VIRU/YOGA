@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/auth")
 public class PasswordResetController {
@@ -17,45 +19,49 @@ public class PasswordResetController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody EmailRequest request) {
-        String token = String.valueOf(passwordResetService.createPasswordResetToken(request.getEmail()));
-        if (token == null) {
+        Optional<String> tokenOpt = passwordResetService.createPasswordResetToken(request.getEmail());
+
+        if (tokenOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Email not found");
         }
 
-        // Return token in JSON instead of sending email
+        // ✅ Only return the plain token string
+        String token = tokenOpt.get();
+
         return ResponseEntity.ok(new TokenResponse(token, "Use this token to reset your password."));
     }
 
+
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        boolean valid = passwordResetService.validatePasswordResetToken(request.getToken());
-        if (!valid) {
-            return ResponseEntity.badRequest().body("Invalid or expired token");
+        public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+            boolean valid = passwordResetService.validatePasswordResetToken(request.getToken());
+            if (!valid) {
+                return ResponseEntity.badRequest().body("Invalid or expired token");
+            }
+
+            boolean success = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            if (success) {
+                return ResponseEntity.ok("Password reset successful");
+            } else {
+                return ResponseEntity.badRequest().body("Password reset failed");
+            }
         }
 
-        boolean success = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
-        if (success) {
-            return ResponseEntity.ok("Password reset successful");
-        } else {
-            return ResponseEntity.badRequest().body("Password reset failed");
+        // DTO classes
+        @Data
+        static class EmailRequest {
+            private String email;
+        }
+
+        @Data
+        static class TokenResponse {
+            private final String token;
+            private final String message;
+        }
+
+        @Data
+        static class ResetPasswordRequest {
+            private String token;
+            private String newPassword;
         }
     }
-
-    // DTO classes
-    @Data
-    static class EmailRequest {
-        private String email;
-    }
-
-    @Data
-    static class TokenResponse {
-        private final String token;
-        private final String message;
-    }
-
-    @Data
-    static class ResetPasswordRequest {
-        private String token;
-        private String newPassword;
-    }
-}

@@ -53,4 +53,32 @@ public class LeaveBalanceService {
     public Employee getEmployeeById(String empId) {
         return employeeRepo.findById(empId).orElseThrow(() -> new RuntimeException("Employee not found"));
     }
+
+    public Map<String, LeaveBalanceDto> updateEmployeeLeaveBalances(String empId, Map<String, LeaveBalanceDto> leaveBalances) {
+        Employee employee = getEmployeeById(empId);
+        List<EmployeeLeaveBalance> existingBalances = balanceRepo.findByEmployee(employee); // You may need this method in repo
+
+        Map<String, EmployeeLeaveBalance> balanceMap = new HashMap<>();
+        for (EmployeeLeaveBalance bal : existingBalances) {
+            balanceMap.put(bal.getLeaveType().getTypeName(), bal);
+        }
+
+        for (Map.Entry<String, LeaveBalanceDto> entry : leaveBalances.entrySet()) {
+            String leaveType = entry.getKey();
+            LeaveBalanceDto dto = entry.getValue();
+
+            if (balanceMap.containsKey(leaveType)) {
+                EmployeeLeaveBalance bal = balanceMap.get(leaveType);
+                bal.setUsedLeaves(dto.getUsed());
+                bal.setBalanceLeave(dto.getTotal() - dto.getUsed());
+                balanceRepo.save(bal); // Save updated balance
+            } else {
+                throw new RuntimeException("Leave type " + leaveType + " not found for employee " + empId);
+            }
+        }
+        return leaveBalances;
+    }
+
+
+
 }

@@ -15,16 +15,16 @@ public class LeaveAlterationController {
     @Autowired
     private LeaveAlterationService leaveAlterationService;
 
-    // Step 1: Assign alteration (either moodle link or staff)
     @PostMapping("/assign")
-    public ResponseEntity<String> assignAlteration(@RequestBody LeaveAlterationDto leaveAlterationDto) {
+    public ResponseEntity<String> assignAlterations(@RequestBody List<LeaveAlterationDto> leaveAlterationDtos) {
         try {
-            String message = leaveAlterationService.assignAlteration(leaveAlterationDto);
+            String message = leaveAlterationService.assignAlterations(leaveAlterationDtos);
             return ResponseEntity.ok(message);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error assigning alteration: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error assigning alterations: " + e.getMessage());
         }
     }
+
 
     // Step 2: Approve staff replacement by the replacement employee
     @PatchMapping("/approve/{id}")

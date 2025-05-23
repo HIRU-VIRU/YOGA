@@ -23,12 +23,12 @@ import java.util.Map;
 @RequestMapping("/api/leave-request")
 @RequiredArgsConstructor
 public class LeaveRequestController {
-    @Autowired
-    private JwtUtil jwtUtil;
 
     private final LeaveRequestService leaveRequestService;
     @Autowired
     private CloudinaryService cloudinaryService;
+    @Autowired
+    private JwtUtil jwtUtil;
     @PostMapping("/create-draft")
     public ResponseEntity<?> createDraft(@RequestBody LeaveRequestDTO leaveRequestdto) {
         LeaveRequest saved = leaveRequestService.createDraftLeaveRequest(leaveRequestdto);
@@ -44,8 +44,7 @@ public class LeaveRequestController {
         return ResponseEntity.ok(response);
     }
     // PATCH endpoint to withdraw a leave request
-
-    @PutMapping("/withdraw/{leaveRequestId}")
+    @PostMapping("/withdraw/{leaveRequestId}")
     public ResponseEntity<String> withdrawLeaveRequest(
             @PathVariable Integer leaveRequestId,
             @RequestHeader("Authorization") String token) {
@@ -59,8 +58,7 @@ public class LeaveRequestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
-    @PostMapping("/upload-medical-certificate")
+    @PostMapping("/upload-file")
     public ResponseEntity<String> uploadMedicalCertificate(@RequestParam("file") MultipartFile file) {
         try {
             String fileUrl = cloudinaryService.uploadDocument(file); // Uploads to Cloudinary

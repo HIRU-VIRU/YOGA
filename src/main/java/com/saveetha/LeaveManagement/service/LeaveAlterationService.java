@@ -26,50 +26,70 @@ public class LeaveAlterationService {
     private NotificationService notificationService;
 
 
-    public String assignAlteration(LeaveAlterationDto dto) {
-        LeaveAlteration alteration = new LeaveAlteration();
+    public String assignAlterations(List<LeaveAlterationDto> dtoList) {
+        StringBuilder resultMessages = new StringBuilder();
 
-        // Set LeaveRequest
-        LeaveRequest leaveRequest = leaveRequestRepository.findById(dto.getRequestId())
-                .orElseThrow(() -> new RuntimeException("LeaveRequest not found"));
-        alteration.setLeaveRequest(leaveRequest);
+        for (LeaveAlterationDto dto : dtoList) {
+            try {
+                LeaveAlteration alteration = new LeaveAlteration();
 
-        // Set Employee who is applying
-        Employee employee = employeeRepository.findById(dto.getEmpId())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-        alteration.setEmployee(employee);
+                // Set LeaveRequest
+                LeaveRequest leaveRequest = leaveRequestRepository.findById(dto.getRequestId())
+                        .orElseThrow(() -> new RuntimeException("LeaveRequest not found"));
+                alteration.setLeaveRequest(leaveRequest);
 
-        // Set Type and Details
-        alteration.setAlterationType(dto.getAlterationType());
+                // Set Employee who is applying
+                Employee employee = employeeRepository.findById(dto.getEmpId())
+                        .orElseThrow(() -> new RuntimeException("Employee not found"));
+                alteration.setEmployee(employee);
 
-        // Handle Moodle Link
-        if (dto.getAlterationType() == AlterationType.MOODLE_LINK) {
-            alteration.setMoodleActivityLink(dto.getMoodleActivityLink());
-            alteration.setNotificationStatus(null); // No approval needed
+                // Set Type and Details
+                alteration.setAlterationType(dto.getAlterationType());
+
+                // Handle Moodle Link
+                if (dto.getAlterationType() == AlterationType.MOODLE_LINK) {
+                    alteration.setMoodleActivityLink(dto.getMoodleActivityLink());
+                    alteration.setNotificationStatus(null); // No approval needed
+                }
+
+                // Handle Staff Alteration
+                if (dto.getAlterationType() == AlterationType.STAFF_ALTERATION) {
+                    Employee replacement = employeeRepository.findById(dto.getReplacementEmpId())
+                            .orElseThrow(() -> new RuntimeException("Replacement Employee not found"));
+
+                    alteration.setReplacementEmployee(replacement);
+                    alteration.setNotificationStatus(NotificationStatus.PENDING); // Approval needed
+
+                    // Fetch requesting employee using dto.getEmpId()
+                    Employee requester = employeeRepository.findByEmpId(dto.getEmpId())
+                            .orElseThrow(() -> new RuntimeException("Requesting Employee not found"));
+
+                    String message = "You have been assigned to handle class alteration on " + dto.getClassDate()
+                            + " (Period: " + dto.getClassPeriod() + ", Subject: " + dto.getSubjectName() + ") "
+                            + "by " + requester.getEmpName() + " (" + requester.getEmpId() + ")";
+
+                    notificationService.sendNotification(dto.getReplacementEmpId(), message);
+                }
+
+                alteration.setClassDate(dto.getClassDate());
+                alteration.setClassPeriod(dto.getClassPeriod());
+                alteration.setSubjectCode(dto.getSubjectCode());
+                alteration.setSubjectName(dto.getSubjectName());
+
+                LeaveAlteration saved = leaveAlterationRepository.save(alteration);
+                resultMessages.append("Alteration created successfully with ID: ").append(saved.getAlterationId()).append("\n");
+
+            } catch (Exception e) {
+                // You can choose to either stop at first error or continue and accumulate errors
+                resultMessages.append("Failed to create alteration for requestId ")
+                        .append(dto.getRequestId()).append(": ").append(e.getMessage()).append("\n");
+            }
         }
 
-        // Handle Staff Alteration
-        if (dto.getAlterationType() == AlterationType.STAFF_ALTERATION) {
-            Employee replacement = employeeRepository.findById(dto.getReplacementEmpId())
-                    .orElseThrow(() -> new RuntimeException("Replacement Employee not found"));
-
-            alteration.setReplacementEmployee(replacement);
-
-            alteration.setNotificationStatus(NotificationStatus.PENDING); // Approval needed
-            String message = "You have been assigned to handle class alteration on " + dto.getClassDate()
-                    + " (Period: " + dto.getClassPeriod() + ", Subject: " + dto.getSubjectName() + ")";
-            notificationService.sendNotification(dto.getReplacementEmpId(), message);
-        }
-
-        alteration.setClassDate(dto.getClassDate());
-        alteration.setClassPeriod(dto.getClassPeriod());
-        alteration.setSubjectCode(dto.getSubjectCode());
-        alteration.setSubjectName(dto.getSubjectName());
-        System.out.println("Notification sent to replacement faculty (Emp ID: " + dto.getReplacementEmpId() + ")");
-        LeaveAlteration saved =leaveAlterationRepository.save(alteration);
-
-        return "Alteration created successfully with ID: " + saved.getAlterationId();
+        return resultMessages.toString();
     }
+
+
     public void approveAlteration(Integer alterationId) {
         LeaveAlteration alteration = leaveAlterationRepository.findById(alterationId)
                 .orElseThrow(() -> new RuntimeException("Alteration not found"));

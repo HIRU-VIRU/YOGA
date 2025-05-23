@@ -11,22 +11,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface LeaveApprovalRepository extends JpaRepository<LeaveApproval, Integer> {
 
-    List<LeaveApproval> findByLeaveRequest(LeaveRequest leaveRequest);
-
-    List<LeaveApproval> findByLeaveRequestAndStatus(LeaveRequest leaveRequest, ApprovalStatus status);
-
-    Optional<LeaveApproval> findByLeaveRequestAndApprover(LeaveRequest leaveRequest, Employee approver);
-
-    List<LeaveApproval> findByApprover(Employee approver);
     List<LeaveApproval> findByLeaveRequest_RequestIdOrderByApprovalFlowLevel_SequenceAsc(Integer leaveRequestId);
 
-
+    @Modifying
+    @Query("DELETE FROM LeaveApproval la WHERE la.leaveRequest = :leaveRequest")
+    void deleteByLeaveRequest(@Param("leaveRequest") LeaveRequest leaveRequest);
 
     List<LeaveApproval> findByLeaveRequest_RequestId(Integer requestId);
 
@@ -39,7 +35,6 @@ public interface LeaveApprovalRepository extends JpaRepository<LeaveApproval, In
     @Query("DELETE FROM LeaveApproval la WHERE la.leaveRequest.id = :leaveRequestId")
     void deleteByLeaveRequestId(@Param("leaveRequestId") Long leaveRequestId);
 
-    void deleteByLeaveRequest(LeaveRequest leaveRequest);
 
 
 }

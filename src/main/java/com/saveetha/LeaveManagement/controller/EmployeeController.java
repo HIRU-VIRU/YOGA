@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.controller;
 
+import com.saveetha.LeaveManagement.dto.CreateEmployeeRequestDto;
 import com.saveetha.LeaveManagement.dto.EmployeeUpdateDTO;
 import com.saveetha.LeaveManagement.entity.Employee;
 import com.saveetha.LeaveManagement.service.CloudinaryService;
@@ -93,4 +94,12 @@ public class EmployeeController {
         return result ? ResponseEntity.ok("Employee deleted successfully")
                 : ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/create")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequestDto dto) {
+        Employee employee = employeeService.createEmployee(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(employee);
+    }
+
 }
