@@ -35,7 +35,8 @@ public class LeaveRequest {
     @Column(nullable = false)
     private LocalDate endDate;
 
-
+    @OneToMany(mappedBy = "leaveRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<LeaveApproval> approvals;
 
     @OneToMany(mappedBy = "leaveRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LeaveAlteration> alterations;
@@ -218,6 +219,14 @@ public class LeaveRequest {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public List<LeaveApproval> getApprovals() {
+        return approvals;
+    }
+
+    public void setApprovals(List<LeaveApproval> approvals) {
+        this.approvals = approvals;
     }
 }
 

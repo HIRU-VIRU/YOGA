@@ -17,6 +17,4 @@ public class LeaveApprovalStatusDTO {
     private LocalDateTime actionTimestamp;
     private Integer approvalFlowLevel;
 
-
-
 }

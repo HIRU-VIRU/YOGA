@@ -114,7 +114,8 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.PATCH, "/api/leave-approval/process/{approvalId}").authenticated()
 						.requestMatchers(HttpMethod.POST, "/api/leave-approval/initiate/{leaveRequestId}").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/leave-approval/approver/pending-requests").permitAll()
-
+						.requestMatchers(HttpMethod.GET, "/api/leave-balance-all").authenticated()
+						.requestMatchers(HttpMethod.GET, "/api/leave-balance/me").authenticated()
 						.anyRequest().authenticated()
 				)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))

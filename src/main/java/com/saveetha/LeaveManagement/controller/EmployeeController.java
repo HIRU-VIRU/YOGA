@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.controller;
 
+import com.saveetha.LeaveManagement.dto.AssignApprovalFlowDTO;
 import com.saveetha.LeaveManagement.dto.CreateEmployeeRequestDto;
 import com.saveetha.LeaveManagement.dto.EmployeeUpdateDTO;
 import com.saveetha.LeaveManagement.entity.Employee;
@@ -100,6 +101,15 @@ public class EmployeeController {
     public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequestDto dto) {
         Employee employee = employeeService.createEmployee(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(employee);
+    }
+
+    @PatchMapping("/assign-approval-flow")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<String> assignApprovalFlowToEmployee(@RequestBody AssignApprovalFlowDTO dto) {
+        boolean updated = employeeService.assignApprovalFlow(dto.getEmpId(), dto.getApprovalFlowId());
+        return updated
+                ? ResponseEntity.ok("Approval flow assigned to employee successfully.")
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee or Approval Flow not found.");
     }
 
 }

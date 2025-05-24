@@ -22,7 +22,7 @@ public class LeaveBalanceController {
     @Autowired
     private LeaveBalanceService leaveBalanceService;
 
-    @GetMapping("/leave-balance")
+    @GetMapping("/leave-balance-all")
     public Object getLeaveBalance(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 

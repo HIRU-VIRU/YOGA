@@ -206,6 +206,19 @@ public class EmployeeService {
 
         return employee;
     }
+    public boolean assignApprovalFlow(String empId, Integer approvalFlowId) {
+        Optional<Employee> employeeOpt = employeeRepository.findById(empId);
+        Optional<ApprovalFlow> flowOpt = approvalFlowRepository.findById(approvalFlowId);
+
+        if (employeeOpt.isPresent() && flowOpt.isPresent()) {
+            Employee employee = employeeOpt.get();
+            employee.setApprovalFlow(flowOpt.get());
+            employeeRepository.save(employee);
+            return true;
+        }
+        return false;
+    }
+
 
 
 }

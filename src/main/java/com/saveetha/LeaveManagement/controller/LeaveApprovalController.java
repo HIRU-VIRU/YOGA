@@ -58,48 +58,60 @@ System.out.println(loggedInEmpId);
 
         List<LeaveApproval> pendingApprovals = leaveApprovalRepository.findPendingApprovalsForApprover(loggedInEmpId);
 
-        List<LeaveRequestSummaryDTO> summaryList = pendingApprovals.stream().map(approval -> {
-            LeaveRequest request = approval.getLeaveRequest();
+        List<LeaveRequestSummaryDTO> summaryList = pendingApprovals.stream()
+                .filter(approval -> {
+                    LeaveRequest request = approval.getLeaveRequest();
+                    int currentLevel = approval.getApprovalFlowLevel().getSequence();; // your approval flow level id
 
-            LeaveRequestSummaryDTO dto = new LeaveRequestSummaryDTO();
-            dto.setRequestId(request.getRequestId());
-            dto.setApprovalId(approval.getApprovalId()); // 👈 Important for PATCH
-            dto.setEmpId(request.getEmployee().getEmpId());
-            dto.setEmpName(request.getEmployee().getEmpName());
-            dto.setLeaveType(request.getLeaveType().getTypeName());
-            dto.setStartDate(request.getStartDate().toString());
-            dto.setEndDate(request.getEndDate().toString());
-            dto.setReason(request.getReason());
-            dto.setStatus(approval.getStatus().name()); // 👈 Current status of approval
+                    // Check if all previous approval flow levels are approved
+                    return request.getApprovals().stream()
+                            .filter(a -> a.getApprovalFlowLevel().getSequence() < currentLevel)  // all previous levels
+                            .allMatch(a -> a.getStatus() == ApprovalStatus.APPROVED);
+                })
+                .map(approval -> {
+                    LeaveRequest request = approval.getLeaveRequest();
 
-            // Map LeaveAlteration -> LeaveAlterationDto
-            List<LeaveAlterationDto> alterationDtos = request.getAlterations().stream().map(alt -> {
-                LeaveAlterationDto altDto = new LeaveAlterationDto();
-                altDto.setRequestId(request.getRequestId());
-                altDto.setEmpId(request.getEmployee().getEmpId());
-                altDto.setAlterationType(alt.getAlterationType());
-                altDto.setMoodleActivityLink(alt.getMoodleActivityLink());
+                    LeaveRequestSummaryDTO dto = new LeaveRequestSummaryDTO();
+                    dto.setRequestId(request.getRequestId());
+                    dto.setApprovalId(approval.getApprovalId());
+                    dto.setEmpId(request.getEmployee().getEmpId());
+                    dto.setEmpName(request.getEmployee().getEmpName());
+                    dto.setLeaveType(request.getLeaveType().getTypeName());
+                    dto.setStartDate(request.getStartDate().toString());
+                    dto.setEndDate(request.getEndDate().toString());
+                    dto.setReason(request.getReason());
+                    dto.setStatus(approval.getStatus().name());
 
-                if (alt.getReplacementEmployee() != null) {
-                    altDto.setReplacementEmpId(alt.getReplacementEmployee().getEmpId());
-                } else {
-                    altDto.setReplacementEmpId(null);
-                }
+                    // Map LeaveAlteration -> LeaveAlterationDto
+                    List<LeaveAlterationDto> alterationDtos = request.getAlterations().stream().map(alt -> {
+                        LeaveAlterationDto altDto = new LeaveAlterationDto();
+                        altDto.setRequestId(request.getRequestId());
+                        altDto.setEmpId(request.getEmployee().getEmpId());
+                        altDto.setAlterationType(alt.getAlterationType());
+                        altDto.setMoodleActivityLink(alt.getMoodleActivityLink());
 
-                altDto.setNotificationStatus(alt.getNotificationStatus());
-                altDto.setClassPeriod(alt.getClassPeriod());
-                altDto.setClassDate(alt.getClassDate());
-                altDto.setSubjectName(alt.getSubjectName());
-                altDto.setSubjectCode(alt.getSubjectCode());
-                return altDto;
-            }).collect(Collectors.toList());
+                        if (alt.getReplacementEmployee() != null) {
+                            altDto.setReplacementEmpId(alt.getReplacementEmployee().getEmpId());
+                        } else {
+                            altDto.setReplacementEmpId(null);
+                        }
 
-            dto.setAlterations(alterationDtos);
-            return dto;
-        }).collect(Collectors.toList());
+                        altDto.setNotificationStatus(alt.getNotificationStatus());
+                        altDto.setClassPeriod(alt.getClassPeriod());
+                        altDto.setClassDate(alt.getClassDate());
+                        altDto.setSubjectName(alt.getSubjectName());
+                        altDto.setSubjectCode(alt.getSubjectCode());
+                        return altDto;
+                    }).collect(Collectors.toList());
+
+                    dto.setAlterations(alterationDtos);
+                    return dto;
+                }).collect(Collectors.toList());
 
         return ResponseEntity.ok(summaryList);
     }
+
+
     @GetMapping("/status/{leaveRequestId}")
     public ResponseEntity<List<LeaveApprovalStatusDTO>> getApprovalStatusByLeaveRequestId(
             @PathVariable Integer leaveRequestId) {
