@@ -1,5 +1,6 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.AssignApprovalFlowDTO;
 import com.saveetha.LeaveManagement.dto.CreateEmployeeRequestDto;
 import com.saveetha.LeaveManagement.dto.EmployeeUpdateDTO;
 import com.saveetha.LeaveManagement.entity.ApprovalFlow;
@@ -65,11 +66,6 @@ public class EmployeeService {
                 employee.setDepartment(department);
             }
 
-            if (employeeUpdateDTO.getApprovalFlowId() != null) {
-                ApprovalFlow flow = approvalFlowRepository.findById(employeeUpdateDTO.getApprovalFlowId())
-                        .orElseThrow(() -> new RuntimeException("Approval Flow not found"));
-                employee.setApprovalFlow(flow);
-            }
 
 
             if (employeeUpdateDTO.getStaffType() != null) {
@@ -172,6 +168,53 @@ public class EmployeeService {
         return employeeRepository.findByactiveTrue();
     }
 
+    public boolean updateEmployeeWithApprovalFlow(AssignApprovalFlowDTO dto) {
+        Optional<Employee> employeeOpt = employeeRepository.findByEmpId(dto.getEmpId());
+        Optional<ApprovalFlow> flowOpt = approvalFlowRepository.findById(dto.getApprovalFlowId());
+
+        if (employeeOpt.isPresent() && flowOpt.isPresent()) {
+            Employee employee = employeeOpt.get();
+
+            employee.setEmpName(dto.getEmpName());
+            employee.setDesignation(dto.getDesignation());
+            employee.setProfilePicture(dto.getProfilePicture());
+
+            // Update department
+            if (dto.getDepartmentId() != null) {
+                Department department = departmentRepository.findById(dto.getDepartmentId())
+                        .orElseThrow(() -> new RuntimeException("Department not found"));
+                employee.setDepartment(department);
+            }
+
+            // Update staff type
+            if (dto.getStaffType() != null) {
+                try {
+                    StaffType staffType = StaffType.valueOf(dto.getStaffType().toUpperCase());
+                    employee.setStaffType(staffType);
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid staff type provided");
+                }
+            }
+
+            // Update joining date & reinitialize leave balance if needed
+            if (dto.getJoiningDate() != null && !dto.getJoiningDate().equals(employee.getJoiningDate())) {
+                employee.setJoiningDate(dto.getJoiningDate());
+
+                List<LeaveType> leaveTypes = leaveTypeRepository.findAll();
+                String academicYear = determineAcademicYear(LocalDate.now());
+
+                initializeLeaveBalanceService.initializeLeaveBalance(employee, leaveTypes, academicYear);
+            }
+
+            // Assign approval flow
+            employee.setApprovalFlow(flowOpt.get());
+
+            employeeRepository.save(employee);
+            return true;
+        }
+
+        return false;
+    }
 
 
     public Employee createEmployee(CreateEmployeeRequestDto dto) {

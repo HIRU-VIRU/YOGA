@@ -68,13 +68,6 @@ public class EmployeeUpdateDTO {
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
     }
-    private Integer approvalFlowId;
 
-    public Integer getApprovalFlowId() {
-        return approvalFlowId;
-    }
 
-    public void setApprovalFlowId(Integer approvalFlowId) {
-        this.approvalFlowId = approvalFlowId;
-    }
 }

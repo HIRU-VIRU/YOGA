@@ -103,13 +103,14 @@ public class EmployeeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(employee);
     }
 
-    @PatchMapping("/assign-approval-flow")
+    @PutMapping("/assign-approval-flow")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> assignApprovalFlowToEmployee(@RequestBody AssignApprovalFlowDTO dto) {
-        boolean updated = employeeService.assignApprovalFlow(dto.getEmpId(), dto.getApprovalFlowId());
+        boolean updated = employeeService.updateEmployeeWithApprovalFlow(dto);
         return updated
-                ? ResponseEntity.ok("Approval flow assigned to employee successfully.")
+                ? ResponseEntity.ok("Employee details updated and approval flow assigned successfully.")
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee or Approval Flow not found.");
     }
+
 
 }

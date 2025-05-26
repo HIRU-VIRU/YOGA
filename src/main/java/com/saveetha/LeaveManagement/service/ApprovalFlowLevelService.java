@@ -1,7 +1,12 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.saveetha.LeaveManagement.dto.ApprovalFlowLevelDTO;
+import com.saveetha.LeaveManagement.entity.ApprovalFlow;
 import com.saveetha.LeaveManagement.entity.ApprovalFlowLevel;
+import com.saveetha.LeaveManagement.entity.Employee;
 import com.saveetha.LeaveManagement.repository.ApprovalFlowLevelRepository;
+import com.saveetha.LeaveManagement.repository.ApprovalFlowRepository;
+import com.saveetha.LeaveManagement.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,16 +44,31 @@ public class ApprovalFlowLevelService {
     public void deleteApprovalFlowLevel(Integer id) {
         approvalFlowLevelRepository.deleteById(id);
     }
-    public ApprovalFlowLevel updateApprovalFlowLevel(Integer id, ApprovalFlowLevel updatedLevel) {
+
+    @Autowired
+    private ApprovalFlowRepository approvalFlowRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    public ApprovalFlowLevel updateApprovalFlowLevel(Integer id, ApprovalFlowLevelDTO dto) {
         ApprovalFlowLevel existing = approvalFlowLevelRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Approval Flow Level not found"));
 
-        existing.setSequence(updatedLevel.getSequence());
-        existing.setApprover(updatedLevel.getApprover());
-        existing.setApprovalFlow(updatedLevel.getApprovalFlow());
-        // update other fields if needed
+        ApprovalFlow approvalFlow = approvalFlowRepository.findById(dto.getApprovalFlowId())
+                .orElseThrow(() -> new RuntimeException("Approval Flow not found"));
+
+        Employee approver = employeeRepository.findById(dto.getApproverId())
+                .orElseThrow(() -> new RuntimeException("Approver not found"));
+
+        existing.setApprovalFlow(approvalFlow);
+        existing.setApprover(approver);
+        existing.setSequence(dto.getSequence());
+        existing.setActive(dto.isActive());
+
         return approvalFlowLevelRepository.save(existing);
     }
+
 
     public ApprovalFlowLevel setActiveStatus(Integer id, boolean isActive) {
         ApprovalFlowLevel existing = approvalFlowLevelRepository.findById(id)
