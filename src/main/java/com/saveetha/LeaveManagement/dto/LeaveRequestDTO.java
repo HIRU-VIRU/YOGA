@@ -21,8 +21,18 @@ public class LeaveRequestDTO {
     private LocalDate earnedDate;
     private String fileUpload;
     private Boolean hasClass;
+    private String session;
+
     public String getEmpId() {
         return empId;
+    }
+
+    public String getSession() {
+        return session;
+    }
+
+    public void setSession(String session) {
+        this.session = session;
     }
 
     public void setEmpId(String empId) {

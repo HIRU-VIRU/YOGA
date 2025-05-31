@@ -35,6 +35,8 @@ public class LeaveRequest {
     @Column(nullable = false)
     private LocalDate endDate;
 
+
+
     @OneToMany(mappedBy = "leaveRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LeaveApproval> approvals;
 
@@ -68,6 +70,9 @@ public class LeaveRequest {
     @Getter
     private LocalDateTime updatedAt;
 
+    @Column(name = "session")
+    private String session;
+
 
     @PrePersist
     protected void onCreate() {
@@ -98,6 +103,14 @@ public class LeaveRequest {
 
     public LeaveType getLeaveType() {
         return leaveType;
+    }
+
+    public String getSession() {
+        return session;
+    }
+
+    public void setSession(String session) {
+        this.session = session;
     }
 
     public void setLeaveType(LeaveType leaveType) {

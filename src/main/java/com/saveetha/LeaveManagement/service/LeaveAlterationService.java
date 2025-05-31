@@ -1,6 +1,9 @@
 package com.saveetha.LeaveManagement.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saveetha.LeaveManagement.dto.LeaveAlterationDto;
+import com.saveetha.LeaveManagement.dto.LeaveAlterationNotificationDto;
 import com.saveetha.LeaveManagement.entity.*;
 import com.saveetha.LeaveManagement.enums.*;
 import com.saveetha.LeaveManagement.repository.*;
@@ -8,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class LeaveAlterationService {
@@ -24,10 +29,12 @@ public class LeaveAlterationService {
 
     @Autowired
     private NotificationService notificationService;
-
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public String assignAlterations(List<LeaveAlterationDto> dtoList) {
         StringBuilder resultMessages = new StringBuilder();
+
 
         for (LeaveAlterationDto dto : dtoList) {
             try {
@@ -46,13 +53,11 @@ public class LeaveAlterationService {
                 // Set Type and Details
                 alteration.setAlterationType(dto.getAlterationType());
 
-                // Handle Moodle Link
                 if (dto.getAlterationType() == AlterationType.MOODLE_LINK) {
                     alteration.setMoodleActivityLink(dto.getMoodleActivityLink());
-                    alteration.setNotificationStatus(null); // No approval needed
+                    alteration.setNotificationStatus(null);
                 }
 
-                // Handle Staff Alteration
                 if (dto.getAlterationType() == AlterationType.STAFF_ALTERATION) {
                     Employee replacement = employeeRepository.findById(dto.getReplacementEmpId())
                             .orElseThrow(() -> new RuntimeException("Replacement Employee not found"));
@@ -60,27 +65,34 @@ public class LeaveAlterationService {
                     alteration.setReplacementEmployee(replacement);
                     alteration.setNotificationStatus(NotificationStatus.PENDING); // Approval needed
 
-                    // Fetch requesting employee using dto.getEmpId()
-                    Employee requester = employeeRepository.findByEmpId(dto.getEmpId())
-                            .orElseThrow(() -> new RuntimeException("Requesting Employee not found"));
+                    // Save first to get alterationId generated
+                    LeaveAlteration saved = leaveAlterationRepository.save(alteration);
 
-                    String message = "You have been assigned to handle class alteration on " + dto.getClassDate()
-                            + " (Period: " + dto.getClassPeriod() + ", Subject: " + dto.getSubjectName() + ") "
-                            + "by " + requester.getEmpName() + " (" + requester.getEmpId() + ")";
+                    // Build notification DTO
+                    LeaveAlterationNotificationDto notificationDto = new LeaveAlterationNotificationDto(
+                            saved.getAlterationId(),
+                            replacement.getEmpId(),
+                            saved.getClassDate() != null ? saved.getClassDate().toString() : null,
+                            saved.getClassPeriod(),
+                            saved.getSubjectCode(),
+                            saved.getSubjectName(),
+                            saved.getNotificationStatus()
+                    );
 
-                    notificationService.sendNotification(dto.getReplacementEmpId(), message);
+                    // Convert DTO to JSON string
+                    // Convert DTO to Map
+                    Map<String, Object> notificationMap = objectMapper.convertValue(notificationDto, new TypeReference<Map<String, Object>>() {});
+
+// Send notification with Map
+                    notificationService.sendNotification(dto.getReplacementEmpId(), notificationMap);
+
+
+                    resultMessages.append("Alteration created successfully with ID: ").append(saved.getAlterationId()).append("\n");
+                    continue;  // skip saving again at the end
                 }
 
-                alteration.setClassDate(dto.getClassDate());
-                alteration.setClassPeriod(dto.getClassPeriod());
-                alteration.setSubjectCode(dto.getSubjectCode());
-                alteration.setSubjectName(dto.getSubjectName());
-
-                LeaveAlteration saved = leaveAlterationRepository.save(alteration);
-                resultMessages.append("Alteration created successfully with ID: ").append(saved.getAlterationId()).append("\n");
 
             } catch (Exception e) {
-                // You can choose to either stop at first error or continue and accumulate errors
                 resultMessages.append("Failed to create alteration for requestId ")
                         .append(dto.getRequestId()).append(": ").append(e.getMessage()).append("\n");
             }

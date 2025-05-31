@@ -79,8 +79,19 @@ public class LeaveRequestService {
         leaveRequest.setEarnedDate(leaveRequestdto.getEarnedDate());
         leaveRequest.setFileUpload(leaveRequestdto.getFileUpload());
 
-        // Set the half-day flag to true or false based on the dto
-        leaveRequest.setHalfDay(leaveRequestdto.isHalfDay()); // This will pass a boolean value (true or false)
+        leaveRequest.setHalfDay(leaveRequestdto.isHalfDay());
+
+        if (leaveRequestdto.isHalfDay()) {
+            if (leaveRequestdto.getSession() == null ||
+                    (!leaveRequestdto.getSession().equalsIgnoreCase("FN") &&
+                            !leaveRequestdto.getSession().equalsIgnoreCase("AN"))) {
+                throw new RuntimeException("Session must be 'FN' or 'AN' for half-day leave.");
+            }
+            leaveRequest.setSession(leaveRequestdto.getSession().toUpperCase());
+        } else {
+            leaveRequest.setSession(null); // Not applicable
+        }
+
 
         double numberOfDays =calculateLeaveDays(leaveRequestdto.getStartDate(), leaveRequestdto.getEndDate(), leaveRequestdto.isHalfDay());
         leaveRequest.setNumberOfDays(numberOfDays);
@@ -97,12 +108,18 @@ public class LeaveRequestService {
 
     }
     private double calculateLeaveDays(LocalDate startDate, LocalDate endDate, boolean isHalfDay) {
-        if (startDate.equals(endDate)) {
-            return isHalfDay ? 0.5 : 1.0;  // If it's a single day leave, return 0.5 for half-day and 1.0 for full-day.
+        if (isHalfDay && !startDate.equals(endDate)) {
+            throw new RuntimeException("Half-day leave can only be applied for a single day.");
         }
+
+        if (startDate.equals(endDate)) {
+            return isHalfDay ? 0.5 : 1.0;
+        }
+
         long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-        return isHalfDay ? totalDays * 0.5 : totalDays;  // For half-day, return 0.5 of the total days.
+        return totalDays;
     }
+
 
     public List<Integer> submitLeaveRequest(Integer requestId) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
